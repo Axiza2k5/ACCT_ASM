@@ -3,7 +3,7 @@ import base64
 import sys
 import json
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 from urllib.parse import quote
 
 TARGET_URL = "https://crypto-assignment.dangduongminhnhat2003.workers.dev/message/send?userId=group-3"
@@ -11,15 +11,30 @@ USER_ID = "group-3"
 
 # Global token storage to simplify sharing
 current_token = None
-PARALLEL_GUESS_BATCH = 2  # Number of parallel guesses to send
+
+LAST_REQUEST_TIME = 0
+RATE_LIMIT_LOCK = threading.Lock()
+
+def enforce_rate_limit():
+    global LAST_REQUEST_TIME
+    with RATE_LIMIT_LOCK:
+        current_time = time.time()
+        elapsed = current_time - LAST_REQUEST_TIME
+        if elapsed < 1:
+            time.sleep(1 - elapsed)
+        LAST_REQUEST_TIME = time.time()
+
 
 def get_token(token = None):
+    payload = {"sessionToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJTZWN1cmVDaGF0IiwiaWF0IjoxNzY1ODk2NTE0LCJleHAiOjE3NjU4OTY4MTQsInN1YiI6Imdyb3VwLTMiLCJzaWQiOiIxM2U1MThmZTU3MjE2YTYyMGUzOGZlYWJlMzA1ZjZkMTYyM2Y0ZDY2YTIwNmMzOTczZGFlMjFkNWI2NTQxZmI0IiwiYWxnb3JpdGhtIjoiZWNkaF8zIiwicHVibGljS2V5Ijp7IngiOiI2NjQyODU3NDE5NjM1NTEyMzY2MDI5ODc3NzE0NTYyMjY3NTMzNDc2Mzk4ODY5NDM2MDg5OTA5NDUxNjg0MDkwNzMxNTQzMTE2NzgzNyIsInkiOiI3MDU3NjQxOTEyOTU1MDkyNDQxNDY3Mjk4NzM0NjY5MjgzODU4NjUwNzQxMzM5NzU4MzUxNjMxMjAxNzU1MDkyNjc0OTE2MTE3ODI0MSJ9LCJlbmNyeXB0ZWREYXRhIjoib29fM2VaNm91enRYc3ZHZHRGRjlqV2VvdkF0VkhsS0ZzSTRuTWNuYVZtWXdLYmYtWTNQUWNnOWVZNDJWNDJFZzRIbkgzejZkUkJnc29hb1IxWjhDOTNZdThJREdoWS1sYlI4bVd1SjlhNlZDd1FhV3Z5ZHhVbXpZVUJrRjlocGJMYjRNZEY2V2lWQ2hLdE5HRVYzX2RpWGRWSTIyeXZlVDk3Z0dPZ2FnbWl3VFh5NUlDX3RBbTUwbGFxX2xQSW1tMjdtdWtna0wwVnhLdkNyZEo4Y3VXSVc1OU96bzVZODlWb19mU2ZHNXhoWEZWQUxySDkwNlpDNTVNNjJmTkNyMEc2WHNZUkJ5bTlNb0ZFZ0lsa2h6Z2hzNnozd2pPUlY3OHE1VlpXdXVCdzgxOXRYY3VNM0p0OGJIbkcyY1FYVVAiLCJjcmVhdGVkQXQiOjE3NjU4OTY1MTM4MjcsImxhc3RBY3Rpdml0eSI6MTc2NTg5NjUxNDA3MX0.YJhyWIV4jYL3rXKs0seswnfxbeEUkmZ60Toy23VsF_w","encryptedMessage":"o1ENQOvV5+bZCMUQ\/S6pAgnuWKyfIaTUeG9+Wv6tTWo=","messageSignature":{"r":"90046965645765064189438931857172966658259996494808450306961688106604750898764","s":"25004094407105811876543790223683131683905969248704141430757406199554915248163","messageHash":"30044915836385976087286096452993035701666349012866199283670340553978528790417","algorithm":"ECDSA-P256"},"clientSignaturePublicKey":{"x":"62237244105861080570981654775756693709032421441820367981576337556529266550777","y":"106622038109168814312068160842053921545460754194661394291159518932546298483990"}}
     if not token:
-        return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJTZWN1cmVDaGF0IiwiaWF0IjoxNzY1ODIwODUxLCJleHAiOjE3NjU4MjExNTEsInN1YiI6Imdyb3VwLTMiLCJzaWQiOiIzY2U3MWQzOTY2MGRhMmQ4NjUwNzcwZjkyZTY3MTcyODRlNTkzYTM4Y2ZhNDJiN2Q5ZTdjZTczMjU0MjMzODA1IiwiYWxnb3JpdGhtIjoiZWNkaF8zIiwicHVibGljS2V5Ijp7IngiOiI2ODcxOTUzMTQwOTg2MTcwMDIxMzc4MzQxNjE0NDExODI3MjIzNjYwNTQ0ODEwOTc0MDI4MDYxODkxODA4MDk5MjEyNTE0ODA0ODA3MCIsInkiOiIxMDY5NDAzNDY0MTkxNDYxODUzNDI1MTEwMTg5NjIzODQzODAyMjA4NjQ4OTYwOTk1NzAyODkzOTc1MzgwMTkxMDAwMTA5MTg5MzUyMjQifSwiZW5jcnlwdGVkRGF0YSI6InM4SHR4LWxGcS1pbDdwT3RaVUdnYTRqUGFRVDNrbk9uZE9Vdy1ac080bVUwMkEwdFVkb1MxR0lJRG82NkR4OVNseDcwNFJXOEs4YmFVenc4NVEweWpGazc5bmE4SUhGb3hJYXBRWEZYSnVhU3JMMHZIVEFKNlpneTQwU2NWbkNoMmo2N0JfZ1RNYkdPWWN6Y2xLdmVjdlhUTGFiN2JsOEp3NzItbmFyaS0tZ0RSNWtLbW9lNkUzSVdSR3pVSHhnem4yUjlNc1F5bmJVMmVkUDFuWGJqa0tUcTM4a0QxYXVQNzJOTVowSm5wWlBZSU5WcjRRUkNpZnEwa2hhSmVHeFB0b1VlQVQyc2dELUlTXzB5bHZQSXQ1TUpFVTYxcFJ4SnltMUw1UERvUWVGYW5fbXdGelNONnUySUkyYW5aWjdIIiwiY3JlYXRlZEF0IjoxNzY1ODIwODUxMjE0LCJsYXN0QWN0aXZpdHkiOjE3NjU4MjA4NTEzNzd9.lcSWaiq3m4tyDFZ-pOb__Sh68PIiR65cJ-D7kvM9uec"
+        return payload["sessionToken"]
+    
+    payload["sessionToken"] = token
     # print("Getting new token...")
-    payload = {"sessionToken":token,"encryptedMessage":"dY0Vr0m9hGo9BmCIReOlOAQI7M+R7xmx+jIqO1jZGPY=","messageSignature":{"r":"50052767446999115007139544558069022590329698892787276124929125769040409596919","s":"3015541346334751449345568818104215136357290177841669283539282635497697840668","messageHash":"48210227627143076923532643274900038989816371053307765416190221206156267718683","algorithm":"ECDSA-P256"},"clientSignaturePublicKey":{"x":"7695860974964638194165385659098743832703217848693275908770865929882303517494","y":"83299517118945450340363021820644025943644636754529826527517157261925840868137"}}
     headers = {'X-User-Id': USER_ID}
     try:
+        enforce_rate_limit()
         response = requests.post(TARGET_URL, json=payload, headers=headers)
         response.raise_for_status()
         return response.json()["sessionToken"]
@@ -48,6 +63,7 @@ def oracle_query(ciphertext_bytes, token):
     
     while True:
         try:
+            enforce_rate_limit()
             response = requests.post(
                 TARGET_URL,
                 json=payload,
@@ -81,19 +97,32 @@ def generate_prioritized_guesses(byte_index, previous_block_byte, padding_value,
     """
     Generates a prioritized list of byte values to guess.
     - For the last byte of the last block, padding values are prioritized.
-    - For other bytes, printable ASCII characters are prioritized.
+    - For other bytes, characters are prioritized in the order: lowercase, uppercase, numbers, symbols.
     """
     guesses = []
+
+    # Define character sets by priority
+    lower_chars = list(range(ord('a'), ord('z') + 1))
+    upper_chars = list(range(ord('A'), ord('Z') + 1))
+    digit_chars = list(range(ord('0'), ord('9') + 1))
+    symbol_chars = list(range(ord(' '), ord('/') + 1)) + \
+                   list(range(ord(':'), ord('@') + 1)) + \
+                   list(range(ord('['), ord('`') + 1)) + \
+                   list(range(ord('{'), ord('~') + 1))
     
-    # Priority 1: Printable ASCII characters
-    # plaintext_byte = (guess ^ padding_value) ^ previous_block_byte
-    # guess = (plaintext_byte ^ previous_block_byte) ^ padding_value
-    printable_chars = list(range(ord(' '), ord('~') + 1))
-    
-    # Priority 2: Common control characters
+    # Common control characters
     control_chars = [0, 10, 13, 9] # NULL, LF, CR, TAB
 
-    # Priority 3: Padding values (from 1 to 16)
+    # Ordered list of character sets for guessing
+    char_sets_in_priority = [
+        lower_chars,
+        upper_chars,
+        digit_chars,
+        symbol_chars,
+        control_chars
+    ]
+
+    # Priority: Padding values (from 1 to 16) for the last block
     padding_guesses = []
     if is_last_block:
         for pad in range(1, 17):
@@ -106,13 +135,14 @@ def generate_prioritized_guesses(byte_index, previous_block_byte, padding_value,
         # For the very last byte, prioritize padding
         guesses.extend(g for g in padding_guesses if g not in guesses)
 
-    # Add printable chars
-    for char_code in printable_chars + control_chars:
-        guess = (char_code ^ previous_block_byte) ^ padding_value
-        if guess not in guesses:
-            guesses.append(guess)
+    # Add character guesses based on the defined priority
+    for char_set in char_sets_in_priority:
+        for char_code in char_set:
+            guess = (char_code ^ previous_block_byte) ^ padding_value
+            if guess not in guesses:
+                guesses.append(guess)
     
-    # Add remaining padding guesses
+    # Add remaining padding guesses that might not have been prioritized
     guesses.extend(g for g in padding_guesses if g not in guesses)
 
     # Add all other byte values as a fallback
@@ -130,7 +160,6 @@ def attempt_guess(guess, byte_index, base_block_bytes, target_block, token):
     return guess if is_valid else None
 
 
-
 def padding_oracle_attack(ciphertext_bytes, block_size=16):
     global current_token
     # Initial token
@@ -142,130 +171,114 @@ def padding_oracle_attack(ciphertext_bytes, block_size=16):
     
     plaintext = b''
 
-    with ThreadPoolExecutor(max_workers=PARALLEL_GUESS_BATCH) as executor:
-        # Process each block from last to first
-        for block_index in range(len(ciphertext_blocks) - 1, -1, -1):
-            target_block = ciphertext_blocks[block_index]
-            previous_block = ciphertext_blocks[block_index - 1] if block_index > 0 else iv
+    # Process each block from last to first
+    for block_index in range(len(ciphertext_blocks) - 1, -1, -1):
+        target_block = ciphertext_blocks[block_index]
+        previous_block = ciphertext_blocks[block_index - 1] if block_index > 0 else iv
+        
+        decrypted_block = b''
+        print(f"\nAttacking block {block_index + 1}...")
+
+        intermediate_state = bytearray(block_size)
+        is_last_block = (block_index == len(ciphertext_blocks) - 1)
+
+        # Decrypt each byte from last to first
+        byte_index = block_size - 1
+        while byte_index >= 0:
+            padding_value = block_size - byte_index
             
-            decrypted_block = b''
-            print(f"\nAttacking block {block_index + 1}...")
+            # Prepare prefix with known intermediate values
+            known_mask = bytearray(block_size)
+            for i in range(byte_index + 1, block_size):
+                known_mask[i] = intermediate_state[i] ^ padding_value
 
-            intermediate_state = bytearray(block_size)
-            is_last_block = (block_index == len(ciphertext_blocks) - 1)
+            base_block_bytes = bytes(known_mask)
+            found_guess = None
 
-            # Decrypt each byte from last to first
-            byte_index = block_size - 1
-            while byte_index >= 0:
-                padding_value = block_size - byte_index
+            token_snapshot = current_token
+            if not token_snapshot:
+                token_snapshot = get_token()
+                current_token = token_snapshot
+
+            previous_block_byte = previous_block[byte_index]
+            guesses = generate_prioritized_guesses(byte_index, previous_block_byte, padding_value, is_last_block)
+
+            for guess in guesses:
+                # Create a visual representation of the characters being guessed
+                char_val = (guess ^ padding_value) ^ previous_block_byte
+                char_repr = chr(char_val) if 32 <= char_val <= 126 else '<non-printable>'
                 
-                # Prepare prefix with known intermediate values
-                known_mask = bytearray(block_size)
-                for i in range(byte_index + 1, block_size):
-                    known_mask[i] = intermediate_state[i] ^ padding_value
+                print(
+                    f"\rTrying: '{char_repr}' at byte {byte_index} ",
+                    end="\r",
+                )
 
-                base_block_bytes = bytes(known_mask)
-                found_guess = None
-
-                token_snapshot = current_token
-                if not token_snapshot:
-                    token_snapshot = get_token()
-                    current_token = token_snapshot
-
-                previous_block_byte = previous_block[byte_index]
-                guesses = generate_prioritized_guesses(byte_index, previous_block_byte, padding_value, is_last_block)
-
-                for i in range(0, len(guesses), PARALLEL_GUESS_BATCH):
-                    batch = guesses[i:i + PARALLEL_GUESS_BATCH]
-                    
-                    # Create a visual representation of the characters being guessed
-                    chars_to_try = "','".join([
-                        chr((g ^ padding_value) ^ previous_block_byte)
-                        if 32 <= ((g ^ padding_value) ^ previous_block_byte) <= 126
-                        else '.'
-                        for g in batch
-                    ])
-                    print(
-                        f"\rTrying: '{chars_to_try}' at byte {byte_index} ",
-                        end="\r",
-                    )
-
-                    future_to_guess = {
-                        executor.submit(
-                            attempt_guess,
-                            guess,
-                            byte_index,
-                            base_block_bytes,
-                            target_block,
-                            token_snapshot,
-                        ): guess
-                        for guess in batch
-                    }
-
-                    for future in as_completed(future_to_guess):
-                        guess_result = future.result()
-                        if guess_result is not None:
-                            found_guess = guess_result
-                            break
-
-                    if found_guess is not None:
-                        break
-
-                if found_guess is not None:
-                    intermediate_byte = found_guess ^ padding_value
-                    intermediate_state[byte_index] = intermediate_byte
-
-                    plaintext_byte = intermediate_byte ^ previous_block[byte_index]
-                    decrypted_block = bytes([plaintext_byte]) + decrypted_block
-
-                    try:
-                        char_repr = chr(plaintext_byte)
-                        if not (32 <= plaintext_byte <= 126):
-                            char_repr = '<non-printable>'
-                    except:
-                        char_repr = '<non-printable>'
-
-                    # Clear the "Trying..." line before printing the result
-                    print(" " * 80, end="\r")
-                    print(f"Found byte {16 - byte_index}/{block_size}: {plaintext_byte:02x} ('{char_repr}')")
-                    
-                    # Handle padding propagation
-                    if is_last_block and byte_index == 15 and 1 < plaintext_byte <= 16:
-                        pad_len = plaintext_byte
-                        print(f"  [+] Detected padding of length {pad_len}. Propagating...")
-                        
-                        # Correctly calculate and fill the rest of the decrypted block
-                        for i in range(1, pad_len):
-                            p_byte_index = 15 - i
-                            p_padding_value = block_size - p_byte_index
-                            
-                            # We know the plaintext is `pad_len`, so we can find the intermediate byte
-                            intermediate_state[p_byte_index] = pad_len ^ previous_block[p_byte_index]
-                            
-                            # We also need to update the known mask for the *next* guess
-                            known_mask[p_byte_index] = intermediate_state[p_byte_index] ^ p_padding_value
-                            
-                            # Prepend the known padding byte to our result
-                            decrypted_block = bytes([pad_len]) + decrypted_block
-
-                        # Skip the bytes we just filled
-                        byte_index -= (pad_len - 1)
-                        
-                    refresh_token()
-                else:
-                    print(f"  [!] Failed to find byte {16 - byte_index}!")
+                guess_result = attempt_guess(
+                    guess,
+                    byte_index,
+                    base_block_bytes,
+                    target_block,
+                    token_snapshot
+                )
+                
+                if guess_result is not None:
+                    found_guess = guess_result
                     break
+
+            if found_guess is not None:
+                intermediate_byte = found_guess ^ padding_value
+                intermediate_state[byte_index] = intermediate_byte
+
+                plaintext_byte = intermediate_byte ^ previous_block[byte_index]
+                decrypted_block = bytes([plaintext_byte]) + decrypted_block
+
+                try:
+                    char_repr = chr(plaintext_byte)
+                    if not (32 <= plaintext_byte <= 126):
+                        char_repr = '<non-printable>'
+                except:
+                    char_repr = '<non-printable>'
+
+                # Clear the "Trying..." line before printing the result
+                print(" " * 80, end="\r")
+                print(f"Found byte {16 - byte_index}/{block_size}: {plaintext_byte:02x} ('{char_repr}')")
                 
-                byte_index -= 1
-                
-            plaintext = decrypted_block + plaintext
+                # Handle padding propagation
+                if is_last_block and byte_index == 15 and 1 < plaintext_byte <= 16:
+                    pad_len = plaintext_byte
+                    print(f"  [+] Detected padding of length {pad_len}. Propagating...")
+                    
+                    # Correctly calculate and fill the rest of the decrypted block
+                    for i in range(1, pad_len):
+                        p_byte_index = 15 - i
+                        p_padding_value = block_size - p_byte_index
+                        
+                        # We know the plaintext is `pad_len`, so we can find the intermediate byte
+                        intermediate_state[p_byte_index] = pad_len ^ previous_block[p_byte_index]
+                        
+                        # We also need to update the known mask for the *next* guess
+                        known_mask[p_byte_index] = intermediate_state[p_byte_index] ^ p_padding_value
+                        
+                        # Prepend the known padding byte to our result
+                        decrypted_block = bytes([pad_len]) + decrypted_block
+
+                    # Skip the bytes we just filled
+                    byte_index -= (pad_len - 1)
+                    
+                refresh_token()
+            else:
+                print(f"  [!] Failed to find byte {16 - byte_index}!")
+                break
+            
+            byte_index -= 1
+            
+        plaintext = decrypted_block + plaintext
 
     return plaintext
 
 if __name__ == "__main__":
     # Target ciphertext
-    ciphertext_bytes_base64 = "dY0Vr0m9hGo9BmCIReOlOAQI7M+R7xmx+jIqO1jZGPY="
-
+    ciphertext_bytes_base64 = "o1ENQOvV5+bZCMUQ\/S6pAgnuWKyfIaTUeG9+Wv6tTWo="
     # Run attack
     result = padding_oracle_attack(base64.b64decode(ciphertext_bytes_base64))
     print("\nDecrypted Result (Hex):", result.hex())
